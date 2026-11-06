@@ -20,6 +20,7 @@ from reportlab.platypus import (CondPageBreak, Image, KeepTogether, PageBreak, P
 ROOT = Path(__file__).resolve().parents[1]
 FIG = ROOT / "reports" / "figures"
 R = json.loads((ROOT / "reports" / "metrics.json").read_text(encoding="utf-8"))
+PF = json.loads((ROOT / "reports" / "performance.json").read_text(encoding="utf-8"))
 OUT = ROOT / "docs" / "Informe_Actividad6.pdf"
 REPO_URL = "https://github.com/santnier92/proyectoFinal_predictorIngresos/tree/develop"
 
@@ -192,6 +193,29 @@ for i, txt in enumerate([
 ], start=1):
     story.append(Paragraph(txt, S["b"], bulletText=f"{i}."))
 
+P("Contexto del Proyecto e Interesados", "h1")
+P("Un modelo que estima ingresos no solo le interesa a quien lo programa. Lo usan analistas que toman "
+  "decisiones, lo vigilan quienes protegen los datos y lo sufren o aprovechan las personas evaluadas. Para "
+  "tener en cuenta a todos definí 12 <i>user personas</i>: perfiles realistas con necesidades concretas que el "
+  "proyecto debe atender. La Tabla 2 las resume; la ficha completa de cada una está en el archivo "
+  "<i>docs/user_personas.md</i> del repositorio.")
+table("User personas del proyecto y cómo las atiende el sistema", [
+    ["#", "Persona y rol", "Necesidad principal", "Cómo la atiende el proyecto"],
+    ["1", "Rodrigo, docente evaluador", "Verificar la rúbrica desde develop", "README, CI en verde, commits por etapa"],
+    ["2", "Laura, analista de riesgo de crédito", "Saber si el modelo es confiable", "Métricas vs baseline y matriz de confusión"],
+    ["3", "Jorge, analista de políticas públicas", "Focalizar sin excluir grupos", "Modelo interpretable y métricas por grupo"],
+    ["4", "Camila, solicitante de crédito", "Trato justo y explicación", "Auditoría por sexo; supervisión humana"],
+    ["5", "Marcela, oficial de protección de datos", "Cumplir la Ley 1581 de 2012", "Minimización, sin servicio expuesto, SHA-256"],
+    ["6", "Valentina, auditora de ética de IA", "Auditar sesgos con evidencia", "Reportes de equidad y código abierto"],
+    ["7", "Andrés, científico de datos junior", "Pipeline reproducible y extensible", "Un módulo por etapa, sin fuga de datos"],
+    ["8", "Esteban, ingeniero DevOps / MLOps", "Pruebas automáticas y portabilidad", "GitHub Actions y modelo versionado"],
+    ["9", "Ricardo, DBA / ingeniero de datos", "Volumen, tipos y almacenamiento", "Prueba con 1 millón de filas y ADR-005"],
+    ["10", "Diego, gerente de producto fintech", "Costo de cada tipo de error", "Interpretación de FP/FN y curva de umbral"],
+    ["11", "Sofía, estudiante de Ing. de Software", "Entender el proyecto", "Glosario, diagramas C4 y notebook"],
+    ["12", "Luis, trabajador migrante", "No ser penalizado por su origen", "Auditoría por país de origen"],
+], [0.8 * cm, 4.6 * cm, 4.8 * cm, 5.8 * cm],
+    note="Las personas son ficticias y representan usuarios, evaluadores, operadores y personas afectadas.")
+
 # ============================================================== model
 P("Selección del Modelo", "h1")
 P("Elegí la <b>regresión logística</b>. Este modelo calcula la probabilidad de que una persona gane más de "
@@ -223,7 +247,7 @@ P(f"El conjunto <i>Adult</i> tiene <b>{thousands(prof['rows'])} registros y {pro
   f"{prof['duplicates']} registros duplicados y datos faltantes, marcados con «?», en las columnas workclass "
   f"({thousands(prof['missing_by_column']['workclass'])}), occupation "
   f"({thousands(prof['missing_by_column']['occupation'])}) y native_country "
-  f"({thousands(prof['missing_by_column']['native_country'])}). La Tabla 2 describe cada variable.")
+  f"({thousands(prof['missing_by_column']['native_country'])}). La Tabla 3 describe cada variable.")
 table("Variables del conjunto de datos Adult y su uso en el modelo", [
     ["Variable", "Tipo", "Descripción", "Uso en el modelo"],
     ["age", "Numérica", "Edad en años", "Feature"],
@@ -242,7 +266,7 @@ table("Variables del conjunto de datos Adult y su uso en el modelo", [
     ["income", "Binaria", "&gt;50K (1) o &lt;=50K (0)", "Variable objetivo"],
 ], [3.6 * cm, 2.2 * cm, 4.6 * cm, 5.6 * cm],
     note="Una variable <i>proxy</i> no es sensible por sí misma, pero está muy relacionada con una que sí lo es.")
-P("La Tabla 3 muestra cinco registros reales del archivo, para dar una idea de cómo se ven los datos.")
+P("La Tabla 4 muestra cinco registros reales del archivo, para dar una idea de cómo se ven los datos.")
 table("Muestra de registros del conjunto de datos", [
     ["age", "workclass", "education_num", "occupation", "sex", "race", "hours", "income"],
     ["39", "State-gov", "13", "Adm-clerical", "Male", "White", "40", "&lt;=50K"],
@@ -260,7 +284,7 @@ P("<b>Objetivo del modelo.</b> Aprender la relación entre las 12 variables de e
 # ============================================================== method
 P("Metodología", "h1")
 P("Seguí las siete etapas del flujo de trabajo de <i>machine learning</i> vistas en clase. Cada etapa tiene su "
-  "propio módulo en el repositorio y queda registrada en un cuaderno de Jupyter ya ejecutado. La Tabla 4 "
+  "propio módulo en el repositorio y queda registrada en un cuaderno de Jupyter ya ejecutado. La Tabla 5 "
   "resume qué hice en cada una.")
 table("Etapas del flujo de trabajo de machine learning aplicadas en el proyecto", [
     ["Etapa", "Qué se hizo"],
@@ -280,11 +304,28 @@ table("Etapas del flujo de trabajo de machine learning aplicadas en el proyecto"
 P("Un cuidado importante fue evitar la fuga de información. El conjunto de prueba se separó desde el principio "
   "y no se usó para entrenar ni para elegir hiperparámetros. Además, todas las transformaciones de los datos se "
   "ajustan solo con los datos de entrenamiento.")
+P("También medí el rendimiento, porque un driver de la arquitectura es que el sistema funcione en un "
+  "computador común y pueda crecer. Para simular «millones de datos» remuestreé el conjunto de entrenamiento "
+  "hasta un millón de filas con los mismos tipos de datos (6 variables numéricas y 9 categóricas). La Tabla 6 "
+  "muestra que el tiempo crece de forma casi lineal y que la memoria sigue muy por debajo del límite de la "
+  "máquina. Si los datos crecieran a decenas de millones, lo recomendable sería pasarlos a PostgreSQL o a "
+  "archivos Parquet, como explica el ADR-005.")
+table("Rendimiento medido del modelo seleccionado", [
+    ["Escenario", "Filas (train)", "Tiempo de entrenamiento", "Memoria pico", "Inferencia por lotes", "Latencia por registro (p95)"],
+    [PF["runs"][0]["scenario"], thousands(PF["runs"][0]["train_rows"]), f'{PF["runs"][0]["train_seconds"]} s',
+     f'{PF["runs"][0]["train_peak_memory_mb"]:.0f} MB', f'{thousands(PF["runs"][0]["throughput_rows_per_second"])} filas/s',
+     f'{PF["runs"][0]["single_record_latency_ms_p95"]} ms'],
+    ["Escala 1 millón", thousands(PF["runs"][1]["train_rows"]), f'{PF["runs"][1]["train_seconds"]} s',
+     f'{PF["runs"][1]["train_peak_memory_mb"]:.0f} MB', f'{thousands(PF["runs"][1]["throughput_rows_per_second"])} filas/s',
+     f'{PF["runs"][1]["single_record_latency_ms_p95"]} ms'],
+], [2.7 * cm, 2.2 * cm, 2.8 * cm, 2.0 * cm, 3.2 * cm, 3.1 * cm],
+    note="Medido con src/benchmark.py en una máquina de 2 vCPU y 7 GB de RAM. Resultados en reports/performance.json.")
+
 
 # ============================================================== metrics
 P("Métricas de Evaluación", "h1")
 P("Todas las métricas se calcularon con el <b>conjunto de prueba</b>, que tiene 9.758 registros que el modelo "
-  "nunca vio. La Tabla 5 compara los cuatro modelos.")
+  "nunca vio. La Tabla 7 compara los cuatro modelos.")
 rows = [["Modelo", "Accuracy", "Precision", "Recall", "F1", "ROC-AUC"]]
 for name, lab in [("baseline", "Baseline (clase mayoritaria)"), ("logreg", "<b>Regresión Logística</b>"),
                   ("decision_tree", "Árbol de Decisión"), ("logreg_unaware", "Reg. Logística sin atributos sensibles")]:
@@ -293,7 +334,7 @@ for name, lab in [("baseline", "Baseline (clase mayoritaria)"), ("logreg", "<b>R
 table("Desempeño de los modelos en el conjunto de prueba", rows,
       [5.6 * cm, 2.1 * cm, 2.1 * cm, 2.1 * cm, 2.1 * cm, 2.1 * cm],
       note="La regresión logística es el modelo seleccionado. Valores con umbral de decisión de 0.5.")
-P("En palabras sencillas, cada métrica responde una pregunta distinta. La Tabla 6 explica qué significa cada "
+P("En palabras sencillas, cada métrica responde una pregunta distinta. La Tabla 8 explica qué significa cada "
   "valor de la regresión logística en este problema.")
 table("Interpretación de las métricas de la regresión logística", [
     ["Métrica", "Valor", "Qué significa en este problema"],
@@ -330,7 +371,7 @@ figure("threshold_tradeoff.png", 10, "Precision, recall y F1 según el punto de 
 # ============================================================== confusion matrix
 P("Matriz de Confusión", "h1")
 P("La matriz de confusión cruza lo que el modelo predijo con lo que realmente pasó. Así se ven los aciertos y "
-  "los dos tipos de error por separado (Figura 4 y Tabla 7).")
+  "los dos tipos de error por separado (Figura 4 y Tabla 9).")
 figure("confusion_matrix_logreg.png", 8.5, "Matriz de confusión de la regresión logística",
        note="Conjunto de prueba con umbral de decisión de 0.5. Clase 1 = ingresos mayores a 50K.")
 table("Significado de cada celda de la matriz de confusión", [
@@ -386,7 +427,7 @@ P("Equidad: Métricas por Grupo", "h2")
 P("Para medir la equidad usé dos criterios. La <b>paridad demográfica</b> pregunta si el modelo dice «&gt;50K» con "
   "la misma frecuencia en cada grupo. La <b>igualdad de oportunidad</b> pregunta si el modelo encuentra por igual "
   "a quienes sí ganan más de 50K en cada grupo, es decir, si el recall es parecido (Hardt et al., 2016). La "
-  "Tabla 8 muestra los resultados.")
+  "Tabla 10 muestra los resultados.")
 rows = [["Grupo", "n (test)", "Tasa real &gt;50K", "Tasa predicha &gt;50K", "TPR (recall)", "FPR", "Accuracy"]]
 for tbl in (FS, FR):
     for x in tbl["groups"]:
@@ -474,7 +515,7 @@ bullets([
 
 # ============================================================== recommendations
 P("Recomendaciones para Mejorar", "h1")
-P("La Tabla 9 resume las mejoras que propongo, agrupadas por tema.")
+P("La Tabla 11 resume las mejoras que propongo, agrupadas por tema.")
 table("Recomendaciones de mejora del modelo y del proyecto", [
     ["Ámbito", "Recomendación"],
     ["Desempeño", "Ajustar el umbral (0.35 sube el F1 a 0.695); probar class_weight='balanced'; crear interacciones "
