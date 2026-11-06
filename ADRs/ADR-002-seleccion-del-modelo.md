@@ -21,6 +21,25 @@ Se compararon los candidatos con el mismo preprocesamiento, ajuste de hiperpará
 
 KNN se descartó de antemano: con 84 variables tras el one-hot y ~39 mil filas, predecir es costoso y las distancias pierden sentido con muchas variables dispersas; además no ofrece una explicación global del modelo.
 
+## PrOACT
+
+**Problema:** elegir un modelo básico que clasifique `>50K` con buen desempeño y que se pueda explicar para el análisis ético.
+
+**Objetivos:** (1) F1 ≥ 0.60 y AUC ≥ 0.85, (2) interpretabilidad global, (3) probabilidades útiles para ajustar el umbral, (4) estabilidad.
+
+| Criterio | Regresión Logística | Árbol de Decisión | KNN |
+|---|---|---|---|
+| F1 test | 0.6736 | 0.6822 | No evaluado (descartado) |
+| ROC-AUC test | 0.9095 | 0.9113 | — |
+| Interpretabilidad | Alta: coeficientes globales por variable | Media: reglas legibles, pero un árbol de profundidad 10 tiene cientos de nodos | Baja |
+| Probabilidades útiles | Sí (suaves, continuas) | Escalonadas por hoja | Sí, pero costosas |
+| Estabilidad (desv. F1 CV) | 0.0118 | 0.0124 | — |
+| Costo de inferencia | Muy bajo | Muy bajo | Alto (distancias a 39 mil puntos) |
+
+**Consecuencias evaluadas:** el desempeño es equivalente; la interpretabilidad decide.
+
+**Tradeoffs:** ~1 punto de accuracy menos que el árbol a cambio de transparencia.
+
 ## Decisión
 
 Se selecciona la **Regresión Logística** (`C=1.0`, `lbfgs`, umbral 0.5) como modelo del sistema. El Árbol de Decisión se mantiene solo como **modelo de comparación**.
@@ -38,6 +57,15 @@ Justificación: la diferencia de F1 con el árbol (0.009) es menor que una desvi
 - ⚠️ Asume relaciones lineales en log-odds: no captura interacciones (por ejemplo, edad × horas trabajadas) a menos que se construyan a mano.
 - ⚠️ Sacrifica ~1 punto de accuracy frente al árbol.
 - ⚠️ Los coeficientes de países poco frecuentes son inestables (pocos ejemplos); se mitiga agrupando categorías con menos de 20 casos (`min_frequency=20`).
+
+## Tradeoffs - Mitigations
+
+| Tradeoff | Mitigación |
+|---|---|
+| No captura interacciones no lineales | Árbol de Decisión como comparación; recomendación de interacciones o boosting en el informe |
+| ~1 punto de accuracy menos que el árbol | Ajuste de umbral (0.35 sube el F1 a 0.695) |
+| Coeficientes inestables en países poco frecuentes | `min_frequency=20` en el one-hot y auditoría agrupada (EE. UU. vs resto) |
+| Aprende sesgos del dataset | Auditoría de equidad por grupo y experimento sin atributos sensibles (sección ética del informe) |
 
 ## Validación
 
