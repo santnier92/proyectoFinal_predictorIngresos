@@ -1,0 +1,457 @@
+{
+  "task": "Binary classification: predict whether a person's annual income is >50K USD (1994 US Census) from demographic and employment attributes.",
+  "data_profile": {
+    "rows": 48842,
+    "columns": 15,
+    "duplicates": 52,
+    "missing_by_column": {
+      "workclass": 2799,
+      "occupation": 2809,
+      "native_country": 857
+    },
+    "target_distribution": {
+      "<=50K": 37155,
+      ">50K": 11687
+    },
+    "positive_rate": 0.23928176569346055
+  },
+  "split": {
+    "rows_after_dedup": 48790,
+    "train_rows": 39032,
+    "test_rows": 9758,
+    "train_positive_rate": 0.23941893830703012,
+    "test_positive_rate": 0.23939331830293092,
+    "n_features_raw": 12
+  },
+  "models": {
+    "baseline": {
+      "best_params": {},
+      "cv": {
+        "accuracy": {
+          "mean": 0.7605810607500885,
+          "std": 1.5024574998572338e-05
+        },
+        "precision": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "recall": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "f1": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "roc_auc": {
+          "mean": 0.5,
+          "std": 0.0
+        }
+      },
+      "train": {
+        "accuracy": 0.7605810616929699,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": 0.5,
+        "tp": 0,
+        "fp": 0,
+        "tn": 29687,
+        "fn": 9345
+      },
+      "test": {
+        "accuracy": 0.760606681697069,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": 0.5,
+        "tp": 0,
+        "fp": 0,
+        "tn": 7422,
+        "fn": 2336
+      }
+    },
+    "logreg": {
+      "best_params": {
+        "model__C": 1.0
+      },
+      "cv": {
+        "accuracy": {
+          "mean": 0.850609888751894,
+          "std": 0.004822829903415723
+        },
+        "precision": {
+          "mean": 0.7302463534479514,
+          "std": 0.011534181303371766
+        },
+        "recall": {
+          "mean": 0.59625468164794,
+          "std": 0.012283227267870938
+        },
+        "f1": {
+          "mean": 0.6564679030620296,
+          "std": 0.011794221072752839
+        },
+        "roc_auc": {
+          "mean": 0.9051167815730011,
+          "std": 0.004644620393345952
+        }
+      },
+      "train": {
+        "accuracy": 0.8516089362574298,
+        "precision": 0.732800419342157,
+        "recall": 0.5983948635634029,
+        "f1": 0.6588124410933082,
+        "roc_auc": 0.9065735204159582,
+        "tp": 5592,
+        "fp": 2039,
+        "tn": 27648,
+        "fn": 3753
+      },
+      "test": {
+        "accuracy": 0.8562205369952859,
+        "precision": 0.7376464595007641,
+        "recall": 0.6198630136986302,
+        "f1": 0.6736450337287742,
+        "roc_auc": 0.909511978226524,
+        "tp": 1448,
+        "fp": 515,
+        "tn": 6907,
+        "fn": 888
+      }
+    },
+    "decision_tree": {
+      "best_params": {
+        "model__max_depth": 10,
+        "model__min_samples_leaf": 20
+      },
+      "cv": {
+        "accuracy": {
+          "mean": 0.8551446058660706,
+          "std": 0.00343308941449141
+        },
+        "precision": {
+          "mean": 0.7560506316744455,
+          "std": 0.028425606140554678
+        },
+        "recall": {
+          "mean": 0.5871589085072231,
+          "std": 0.03521981316004515
+        },
+        "f1": {
+          "mean": 0.6595336501789815,
+          "std": 0.012441445710103673
+        },
+        "roc_auc": {
+          "mean": 0.9046803567125646,
+          "std": 0.003519652127437539
+        }
+      },
+      "train": {
+        "accuracy": 0.8613445378151261,
+        "precision": 0.7857039081795728,
+        "recall": 0.578705189941145,
+        "f1": 0.6665023416317476,
+        "roc_auc": 0.9177124294289034,
+        "tp": 5408,
+        "fp": 1475,
+        "tn": 28212,
+        "fn": 3937
+      },
+      "test": {
+        "accuracy": 0.8659561385529821,
+        "precision": 0.7887640449438202,
+        "recall": 0.601027397260274,
+        "f1": 0.6822157434402333,
+        "roc_auc": 0.9112933757654953,
+        "tp": 1404,
+        "fp": 376,
+        "tn": 7046,
+        "fn": 932
+      }
+    },
+    "logreg_unaware": {
+      "best_params": {
+        "model__C": 10.0
+      },
+      "cv": {
+        "accuracy": {
+          "mean": 0.8501487641201532,
+          "std": 0.004251549710938764
+        },
+        "precision": {
+          "mean": 0.7309832346375583,
+          "std": 0.009233460607985463
+        },
+        "recall": {
+          "mean": 0.5918673087212414,
+          "std": 0.013337128781920369
+        },
+        "f1": {
+          "mean": 0.654076604033497,
+          "std": 0.011335227214963679
+        },
+        "roc_auc": {
+          "mean": 0.9038961367512239,
+          "std": 0.004841551472241591
+        }
+      },
+      "train": {
+        "accuracy": 0.8506609961057594,
+        "precision": 0.7325396825396825,
+        "recall": 0.5926163723916533,
+        "f1": 0.6551907719609583,
+        "roc_auc": 0.9046092436905878,
+        "tp": 5538,
+        "fp": 2022,
+        "tn": 27665,
+        "fn": 3807
+      },
+      "test": {
+        "accuracy": 0.8554006968641115,
+        "precision": 0.7385250128932439,
+        "recall": 0.613013698630137,
+        "f1": 0.6699415204678363,
+        "roc_auc": 0.909026305079678,
+        "tp": 1432,
+        "fp": 507,
+        "tn": 6915,
+        "fn": 904
+      }
+    }
+  },
+  "threshold_analysis": {
+    "best_threshold_for_f1": 0.35,
+    "best_f1": 0.6953773212169103
+  },
+  "top_coefficients": {
+    "positive": {
+      "num__capital_gain": 2.3,
+      "cat__marital_status_Married-civ-spouse": 1.406,
+      "cat__marital_status_Married-AF-spouse": 1.258,
+      "cat__native_country_Ireland": 1.017,
+      "cat__native_country_Portugal": 0.93,
+      "cat__relationship_Wife": 0.851,
+      "cat__occupation_Exec-managerial": 0.815,
+      "cat__native_country_Italy": 0.768
+    },
+    "negative": {
+      "cat__occupation_Priv-house-serv": -1.165,
+      "cat__marital_status_Never-married": -1.131,
+      "cat__native_country_Columbia": -1.054,
+      "cat__occupation_Farming-fishing": -0.978,
+      "cat__relationship_Own-child": -0.978,
+      "cat__sex_Female": -0.967,
+      "cat__native_country_South": -0.944,
+      "cat__occupation_Other-service": -0.875
+    }
+  },
+  "leakage_check": {
+    "test_rows_with_profile_seen_in_train": 2019,
+    "share": 0.2069071531051445,
+    "f1_seen_profiles": 0.6021765417170496,
+    "f1_unseen_profiles": 0.690668202764977
+  },
+  "acceptance": {
+    "checks": {
+      "f1_test >= min_f1": true,
+      "roc_auc_test >= min_roc_auc": true,
+      "accuracy gain vs baseline >= 0.05": true,
+      "|f1_train - f1_test| <= 0.03": true,
+      "cv f1 std <= 0.02": true
+    },
+    "accepted": true
+  },
+  "fairness": {
+    "logreg": {
+      "sex": {
+        "gaps": {
+          "demographic_parity_diff": 0.1993696767216234,
+          "equal_opportunity_diff": 0.1699146656613177,
+          "fpr_diff": 0.08739140339821194,
+          "disparate_impact_ratio": 0.25918789100318795
+        },
+        "groups": [
+          {
+            "group": "Male",
+            "n": 6432,
+            "base_rate": 0.3036,
+            "selection_rate": 0.2691,
+            "tpr": 0.6477,
+            "fpr": 0.104,
+            "accuracy": 0.8206
+          },
+          {
+            "group": "Female",
+            "n": 3326,
+            "base_rate": 0.1152,
+            "selection_rate": 0.0698,
+            "tpr": 0.4778,
+            "fpr": 0.0166,
+            "accuracy": 0.9251
+          }
+        ]
+      },
+      "race": {
+        "gaps": {
+          "demographic_parity_diff": 0.1657703702663615,
+          "equal_opportunity_diff": 0.21587934687772653,
+          "fpr_diff": 0.09176006641760066,
+          "disparate_impact_ratio": 0.3216501953573891
+        },
+        "groups": [
+          {
+            "group": "White",
+            "n": 8353,
+            "base_rate": 0.2549,
+            "selection_rate": 0.2156,
+            "tpr": 0.6285,
+            "fpr": 0.0744,
+            "accuracy": 0.8499
+          },
+          {
+            "group": "Black",
+            "n": 916,
+            "base_rate": 0.1234,
+            "selection_rate": 0.0786,
+            "tpr": 0.4602,
+            "fpr": 0.0249,
+            "accuracy": 0.9116
+          },
+          {
+            "group": "Asian-Pac-Islander",
+            "n": 311,
+            "base_rate": 0.2283,
+            "selection_rate": 0.2444,
+            "tpr": 0.6761,
+            "fpr": 0.1167,
+            "accuracy": 0.836
+          }
+        ]
+      },
+      "native_country": {
+        "gaps": {
+          "demographic_parity_diff": 0.04453618240418619,
+          "equal_opportunity_diff": 0.0036829390582980848,
+          "fpr_diff": 0.022858124649441057,
+          "disparate_impact_ratio": 0.7837203888483059
+        },
+        "groups": [
+          {
+            "group": "United-States",
+            "n": 8717,
+            "base_rate": 0.2444,
+            "selection_rate": 0.2059,
+            "tpr": 0.6202,
+            "fpr": 0.072,
+            "accuracy": 0.8528
+          },
+          {
+            "group": "Non-US/Unknown",
+            "n": 1041,
+            "base_rate": 0.1979,
+            "selection_rate": 0.1614,
+            "tpr": 0.6165,
+            "fpr": 0.0491,
+            "accuracy": 0.8847
+          }
+        ]
+      }
+    },
+    "logreg_unaware": {
+      "sex": {
+        "gaps": {
+          "demographic_parity_diff": 0.19198926070190236,
+          "equal_opportunity_diff": 0.1461071472020684,
+          "fpr_diff": 0.08391613007035438,
+          "disparate_impact_ratio": 0.273175441533469
+        },
+        "groups": [
+          {
+            "group": "Male",
+            "n": 6432,
+            "base_rate": 0.3036,
+            "selection_rate": 0.2641,
+            "tpr": 0.637,
+            "fpr": 0.1016,
+            "accuracy": 0.819
+          },
+          {
+            "group": "Female",
+            "n": 3326,
+            "base_rate": 0.1152,
+            "selection_rate": 0.0722,
+            "tpr": 0.4909,
+            "fpr": 0.0177,
+            "accuracy": 0.9257
+          }
+        ]
+      },
+      "race": {
+        "gaps": {
+          "demographic_parity_diff": 0.16674272314972127,
+          "equal_opportunity_diff": 0.19818023183347871,
+          "fpr_diff": 0.0963574097135741,
+          "disparate_impact_ratio": 0.3351668346209831
+        },
+        "groups": [
+          {
+            "group": "White",
+            "n": 8353,
+            "base_rate": 0.2549,
+            "selection_rate": 0.2113,
+            "tpr": 0.6186,
+            "fpr": 0.072,
+            "accuracy": 0.8492
+          },
+          {
+            "group": "Black",
+            "n": 916,
+            "base_rate": 0.1234,
+            "selection_rate": 0.0841,
+            "tpr": 0.4779,
+            "fpr": 0.0286,
+            "accuracy": 0.9105
+          },
+          {
+            "group": "Asian-Pac-Islander",
+            "n": 311,
+            "base_rate": 0.2283,
+            "selection_rate": 0.2508,
+            "tpr": 0.6761,
+            "fpr": 0.125,
+            "accuracy": 0.8296
+          }
+        ]
+      },
+      "native_country": {
+        "gaps": {
+          "demographic_parity_diff": 0.03210494317143056,
+          "equal_opportunity_diff": 0.014476503031131793,
+          "fpr_diff": 0.012197678424841533,
+          "disparate_impact_ratio": 0.8411698129254482
+        },
+        "groups": [
+          {
+            "group": "United-States",
+            "n": 8717,
+            "base_rate": 0.2444,
+            "selection_rate": 0.2021,
+            "tpr": 0.6117,
+            "fpr": 0.0697,
+            "accuracy": 0.8525
+          },
+          {
+            "group": "Non-US/Unknown",
+            "n": 1041,
+            "base_rate": 0.1979,
+            "selection_rate": 0.17,
+            "tpr": 0.6262,
+            "fpr": 0.0575,
+            "accuracy": 0.8799
+          }
+        ]
+      }
+    }
+  }
+}
