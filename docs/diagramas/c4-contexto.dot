@@ -1,0 +1,24 @@
+// C4 model - Level 1: System Context. Render: dot -Tpng c4-contexto.dot -o c4-contexto.png
+digraph C4Context {
+    graph [rankdir=TB, fontname="Helvetica", fontsize=16, labelloc=t, nodesep=0.9, ranksep=1.0, pad=0.4,
+           label=<<b>[System Context] Predictor de Ingresos</b><br/><font point-size="11">C4 - Nivel 1 · Proyecto Final Teoría de la Computación II</font>>];
+    node  [shape=box, style="rounded,filled", fontname="Helvetica", fontcolor=white, color="#2b4d7a", penwidth=1.2, margin="0.3,0.18"];
+    edge  [fontname="Helvetica", fontsize=10, color="#555555", fontcolor="#333333", arrowsize=0.8];
+
+    analista [fillcolor="#08427b", label=<<b>Estudiante / Analista de datos</b><br/><font point-size="9">[Person]</font><br/><br/><font point-size="10">Entrena, evalúa y audita el modelo;<br/>ejecuta predicciones sobre datos nuevos.</font>>];
+    docente  [fillcolor="#08427b", label=<<b>Docente evaluador</b><br/><font point-size="9">[Person]</font><br/><br/><font point-size="10">Revisa la rama develop: código,<br/>métricas, ADR y análisis ético.</font>>];
+
+    predictor [fillcolor="#1168bd", label=<<b>Predictor de Ingresos</b><br/><font point-size="9">[Software System]</font><br/><br/><font point-size="10">Pipeline Python / scikit-learn que clasifica<br/>si el ingreso anual supera 50K USD,<br/>valida criterios de aceptación y audita equidad.</font>>];
+
+    uci    [fillcolor="#8a8a8a", color="#6b6b6b", label=<<b>UCI Machine Learning Repository</b><br/><font point-size="9">[External System]</font><br/><br/><font point-size="10">Fuente del dataset Adult / Census<br/>Income (1994), licencia CC BY 4.0.</font>>];
+    github [fillcolor="#8a8a8a", color="#6b6b6b", label=<<b>GitHub</b><br/><font point-size="9">[External System]</font><br/><br/><font point-size="10">Repositorio proyectoFinal_predictorIngresos<br/>ramas dev_snieto21 → develop.</font>>];
+
+    { rank=same; analista; docente; }
+    { rank=same; uci; github; }
+
+    analista -> predictor [label="  Ejecuta pipeline,\n  tests y predicciones\n  [CLI / Jupyter]"];
+    predictor -> uci      [label="  Obtiene dataset una vez,\n  verificado con SHA-256\n  [HTTPS / CSV]"];
+    predictor -> github   [label="  Versiona modelo .joblib,\n  métricas y figuras [git]"];
+    analista -> github    [label="Commits y Pull Requests [git]", constraint=false];
+    docente -> github     [label="  Revisa develop\n  [HTTPS]"];
+}
