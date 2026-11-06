@@ -1,5 +1,7 @@
 # proyectoFinal_predictorIngresos
 
+[![CI](https://github.com/santnier92/proyectoFinal_predictorIngresos/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/santnier92/proyectoFinal_predictorIngresos/actions/workflows/ci.yml)
+
 **Proyecto Final (Actividad 6) — Teoría de la Computación II**
 Ingeniería de Software · Universidad de La Salle
 Autor: **Santiago Nieto Rodríguez** · rama de trabajo `dev_snieto21` → integración en `develop`
@@ -13,7 +15,7 @@ Autor: **Santiago Nieto Rodríguez** · rama de trabajo `dev_snieto21` → integ
 ## Tabla de contenido
 1. [Problema que resuelve](#1-problema-que-resuelve)
 2. [Qué hará y qué no hará el sistema](#2-qué-hará-y-qué-no-hará-el-sistema)
-3. [Diagrama C4 de contexto](#3-diagrama-c4-de-contexto)
+3. [Arquitectura del sistema (C4 de contexto y componentes)](#3-arquitectura-del-sistema)
 4. [Datos](#4-datos)
 5. [Cómo funciona la solución](#5-cómo-funciona-la-solución)
 6. [Decisiones de arquitectura (ADR)](#6-decisiones-de-arquitectura-adr)
@@ -54,7 +56,44 @@ Las decisiones automatizadas que dependen del nivel de ingresos de una persona (
 | Predice la probabilidad de `>50K` para registros nuevos desde un CSV, con umbral configurable | No predice el ingreso exacto (no es una regresión) |
 | Verifica los criterios de aceptación con `pytest` | No garantiza validez fuera de EE. UU. ni fuera de 1994 |
 
-## 3. Diagrama C4 de contexto
+## 3. Arquitectura del sistema
+
+La arquitectura sigue el proceso visto en clase: interesados → drivers → escenarios de calidad → estructura (C4) → estilo y tácticas → decisiones (ADR).
+
+### 3.1 Interesados y sus preocupaciones
+
+| Interesado | Preocupación | Resultado esperado |
+|---|---|---|
+| Docente evaluador | ¿El trabajo es verificable y cumple la rúbrica? | Rama `develop` revisable, resultados reproducibles |
+| Estudiante / Analista | ¿Cómo entreno, evalúo y uso el modelo? | Un comando por etapa, pruebas automáticas |
+| Personas representadas en los datos | ¿El modelo las trata de forma justa? | Auditoría de equidad por sexo, raza y país |
+| Seguridad y datos | ¿Se protege la información sensible? | Dataset público y anonimizado, integridad SHA-256, sin servicio expuesto |
+
+### 3.2 Drivers arquitectónicos (priorizados)
+
+| Prioridad | Clase | Driver | Efecto sobre la arquitectura |
+|---|---|---|---|
+| P1 | Atributo de calidad | **Reproducibilidad**: los mismos datos y el mismo código producen los mismos números | Semilla fija, dataset con hash, pipeline por CLI (ADR-001, ADR-003) |
+| P1 | Atributo de calidad | **Validez de la evaluación**: sin fuga de información y comparada contra un baseline | Pipeline de scikit-learn, split estratificado, tests (ADR-004) |
+| P1 | Resultado académico | **Evidencia por etapa** del workflow de ML | Un componente por etapa + notebook ejecutado |
+| P2 | Atributo de calidad | **Interpretabilidad / transparencia** para el análisis ético | Regresión Logística con coeficientes (ADR-002) |
+| P2 | Riesgo | **Sesgo** del dataset de 1994 | Componente Fairness Auditor y métricas por grupo |
+| P3 | Restricción | Costo cero y sin credenciales de nube | Ejecución local, artefactos en Git (ADR-003) |
+
+### 3.3 Escenarios de calidad medibles
+
+*Plantilla: cuando [estímulo] en [entorno], el sistema [respuesta], medido con [medida].*
+
+| Atributo | Estímulo | Entorno | Respuesta | Medida | Prioridad |
+|---|---|---|---|---|---|
+| Reproducibilidad | El docente clona `develop` y ejecuta el pipeline | Máquina con Python 3.10+ | Regenera modelo y reportes | Métricas idénticas a `reports/metrics.json` (4 decimales); < 60 s | P1 |
+| Validez | Se ejecuta `pytest` | Tras entrenar | Verifica fuga, baseline y aceptación | 6/6 pruebas superadas | P1 |
+| Desempeño del modelo | Se evalúa el conjunto de prueba | Hold-out nunca visto | Clasifica `>50K` | F1 ≥ 0.60 y ROC-AUC ≥ 0.85 | P1 |
+| Integridad de datos | El CSV de entrada es alterado | Carga de datos | El pipeline se detiene con error | 100 % de alteraciones detectadas (SHA-256) | P2 |
+| Robustez de la entrada | Llega un CSV sin columnas requeridas | Predicción por CLI | Rechaza la entrada con un mensaje claro | `ValueError` que lista las columnas faltantes | P2 |
+| Equidad | Se audita el modelo | Test, por grupo | Reporta brechas por sexo y raza | Diferencias de TPR y de tasa de selección publicadas en `reports/` | P2 |
+
+### 3.4 Diagrama C4 de contexto (nivel 1)
 
 ![C4 - Diagrama de contexto](docs/diagramas/c4-contexto.png)
 
@@ -85,6 +124,38 @@ flowchart TB
 </details>
 
 Fuente del diagrama: [`docs/diagramas/c4-contexto.dot`](docs/diagramas/c4-contexto.dot) (Graphviz).
+
+### 3.5 Estilo arquitectónico y tácticas
+
+**Estilo: tuberías y filtros (pipes and filters) en un monolito modular.** Cada etapa del workflow de ML es un filtro con una sola responsabilidad que recibe datos de la anterior. Este estilo responde a los drivers P1 (evidencia por etapa y reproducibilidad) sin la complejidad de microservicios o eventos, que no se justifican para un proceso batch de un solo usuario.
+
+| Escenario prioritario | Táctica | Efecto y costo |
+|---|---|---|
+| Reproducibilidad | Semilla fija, dataset versionado con hash y dependencias declaradas | Resultados idénticos; el repo pesa ~5 MB más |
+| Validez (sin fuga) | Preprocesamiento encapsulado en `Pipeline` y deduplicación antes de partir | El test nunca influye en el ajuste; exige disciplina en el diseño |
+| Integridad de datos | Verificación SHA-256 en cada carga | Detecta cambios; el hash debe actualizarse si cambia el dataset |
+| Robustez de la entrada | Validación del contrato de columnas en `predict` | Errores claros; hay que mantener la lista de columnas |
+| Detección de regresiones | Pruebas automatizadas + CI en GitHub Actions | Un PR que degrade las métricas falla; ~1 min de CI |
+| Transparencia | Modelo lineal interpretable + métricas por grupo | Permite explicar decisiones; cede ~1 punto de accuracy |
+
+### 3.6 Diagrama C4 de componentes (nivel 3)
+
+Zoom al contenedor **ML Pipeline**: un componente por etapa del workflow, más los almacenes de datos que usa.
+
+![C4 - Diagrama de componentes](docs/diagramas/c4-componentes.png)
+
+Fuente: [`docs/diagramas/c4-componentes.dot`](docs/diagramas/c4-componentes.dot).
+
+| Componente | Responsabilidad | Etapa |
+|---|---|---|
+| Pipeline Orchestrator (`src/pipeline.py`) | Coordina las etapas y escribe los reportes | 1–7 |
+| Data Loader (`src/data.py`) | Carga el dataset y verifica su integridad | 2 |
+| Feature Builder (`src/features.py`) | Limpia, parte y transforma los datos | 3 |
+| Model Catalog (`src/models.py`) | Define los candidatos y sus grillas | 4 |
+| Trainer (`src/train.py`) | Ajusta hiperparámetros con CV y persiste el modelo | 5 |
+| Evaluator (`src/evaluate.py`) | Métricas, matriz de confusión, ROC y aceptación | 6 |
+| Fairness Auditor (`src/fairness.py`) | Métricas por grupo protegido | 6 |
+| Predictor CLI (`src/predict.py`) | Valida la entrada y predice registros nuevos | 7 |
 
 ## 4. Datos
 
@@ -139,6 +210,7 @@ flowchart LR
 
 ```
 proyectoFinal_predictorIngresos/
+├── .github/workflows/ci.yml   # CI: pipeline + pytest en cada push/PR
 ├── ADRs/                      # Architecture Decision Records (4)
 ├── data/
 │   ├── raw/adult.csv          # Dataset original (CC BY 4.0)
@@ -146,7 +218,7 @@ proyectoFinal_predictorIngresos/
 ├── docs/
 │   ├── Informe_Actividad6.pdf # Desarrollo completo de la actividad
 │   ├── build_report.py        # Regenera el PDF desde reports/metrics.json
-│   └── diagramas/             # C4 de contexto (.dot y .png)
+│   └── diagramas/             # C4 de contexto y de componentes (.dot y .png)
 ├── models/logreg.joblib       # Pipeline entrenado (preprocesamiento + modelo)
 ├── notebooks/workflow_ml.ipynb# Evidencia ejecutada de cada etapa
 ├── reports/                   # metrics.json, comparaciones, auditoría de equidad, figuras
@@ -156,6 +228,8 @@ proyectoFinal_predictorIngresos/
 ```
 
 ## 6. Decisiones de arquitectura (ADR)
+
+Cada ADR sigue la plantilla de [ZAITects](https://github.com/TheKataLog/ZAITects/tree/main/ADRs): *Estado, Contexto, Alternativas, PrOACT, Decisión, Consecuencias, Tradeoffs - Mitigations* y *Validación*.
 
 | ADR | Decisión | Estado |
 |---|---|---|
@@ -262,7 +336,7 @@ pip install reportlab && python docs/build_report.py
 2. **Conjunto de prueba aislado:** nunca se usa en el entrenamiento ni en la selección de hiperparámetros.
 3. **Comparación con el baseline:** el modelo debe superar a la estrategia trivial.
 4. **Estabilidad:** media ± desviación en 5 folds.
-5. **Pruebas automatizadas:** los criterios de aceptación fallan el build si no se cumplen.
+5. **Pruebas automatizadas e integración continua:** GitHub Actions ejecuta el pipeline y `pytest` en cada push y Pull Request; si un criterio de aceptación no se cumple, el build falla.
 
 ## 10. Glosario
 
