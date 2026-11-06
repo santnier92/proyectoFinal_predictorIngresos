@@ -1,0 +1,51 @@
+// C4 model - Level 3: Component diagram of the "ML Pipeline" container.
+// Render: dot -Tpng -Gdpi=130 c4-componentes.dot -o c4-componentes.png
+digraph C4Component {
+    graph [rankdir=TB, fontname="Helvetica", fontsize=16, labelloc=t, nodesep=0.55, ranksep=0.75, pad=0.4, compound=true,
+           label=<<b>[Component] Predictor de Ingresos - ML Pipeline</b><br/><font point-size="11">C4 - Nivel 3 · un componente por etapa del workflow de ML</font>>];
+    node  [shape=box, style="rounded,filled", fontname="Helvetica", fontcolor=white, penwidth=1.2, margin="0.22,0.12"];
+    edge  [fontname="Helvetica", fontsize=9, color="#555555", fontcolor="#333333", arrowsize=0.7];
+
+    analista [fillcolor="#08427b", color="#052e56", label=<<b>Estudiante / Analista</b><br/><font point-size="9">[Person]</font>>];
+    notebook [fillcolor="#438dd5", color="#2e6295", label=<<b>Notebook de evidencia</b><br/><font point-size="9">[Container: Jupyter]</font><br/><font point-size="9">Muestra cada etapa ejecutada</font>>];
+    uci      [fillcolor="#8a8a8a", color="#6b6b6b", label=<<b>UCI ML Repository</b><br/><font point-size="9">[External System]</font>>];
+
+    subgraph cluster_pipeline {
+        label=<<b>ML Pipeline</b> <font point-size="10">[Container: Python 3 / scikit-learn CLI]</font>>;
+        style="dashed"; color="#444444"; fontname="Helvetica"; fontsize=12; margin=18;
+        node [fillcolor="#85bbf0", color="#5d82a8", fontcolor="#000000"];
+
+        orchestrator [label=<<b>Pipeline Orchestrator</b><br/><font point-size="9">[Component: src/pipeline.py]</font><br/><font point-size="9">Ejecuta las etapas 1-7 y escribe reportes</font>>];
+        loader   [label=<<b>Data Loader</b><br/><font point-size="9">[Component: src/data.py]</font><br/><font point-size="9">Etapa 2 · carga y verifica SHA-256</font>>];
+        features [label=<<b>Feature Builder</b><br/><font point-size="9">[Component: src/features.py]</font><br/><font point-size="9">Etapa 3 · limpieza, split, preprocesamiento</font>>];
+        catalog  [label=<<b>Model Catalog</b><br/><font point-size="9">[Component: src/models.py]</font><br/><font point-size="9">Etapa 4 · baseline, LogReg, árbol</font>>];
+        trainer  [label=<<b>Trainer</b><br/><font point-size="9">[Component: src/train.py]</font><br/><font point-size="9">Etapa 5 · GridSearchCV 5 folds</font>>];
+        evaluator[label=<<b>Evaluator</b><br/><font point-size="9">[Component: src/evaluate.py]</font><br/><font point-size="9">Etapa 6 · métricas, matriz, aceptación</font>>];
+        auditor  [label=<<b>Fairness Auditor</b><br/><font point-size="9">[Component: src/fairness.py]</font><br/><font point-size="9">Etapa 6 · métricas por grupo</font>>];
+        predictor[label=<<b>Predictor CLI</b><br/><font point-size="9">[Component: src/predict.py]</font><br/><font point-size="9">Etapa 7 · predice datos nuevos</font>>];
+
+        node [shape=cylinder, fillcolor="#438dd5", color="#2e6295", fontcolor="white"];
+        rawstore    [label=<<b>Dataset</b><br/><font point-size="9">[data/raw/adult.csv]</font>>];
+        modelstore  [label=<<b>Model Store</b><br/><font point-size="9">[models/logreg.joblib]</font>>];
+        reportstore [label=<<b>Reports</b><br/><font point-size="9">[reports/*.json, *.csv, *.png]</font>>];
+    }
+
+    analista -> orchestrator [label=" python -m src.pipeline"];
+    analista -> predictor    [label=" python -m src.predict"];
+    notebook -> orchestrator [label=" importa módulos", style=dashed];
+
+    orchestrator -> loader;
+    orchestrator -> features;
+    orchestrator -> catalog;
+    orchestrator -> trainer;
+    orchestrator -> evaluator;
+    orchestrator -> auditor;
+
+    loader -> rawstore  [label=" lee"];
+    loader -> uci       [label=" descarga si falta [HTTPS]", style=dashed];
+    catalog -> features [label=" usa preprocesador"];
+    trainer -> modelstore [label=" guarda"];
+    evaluator -> reportstore [label=" escribe"];
+    auditor -> reportstore   [label=" escribe"];
+    predictor -> modelstore  [label=" carga"];
+}
