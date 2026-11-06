@@ -1,4 +1,4 @@
-# ADR-004: Estrategia de separación de datos y métrica principal
+# ADR-004: Métricas de evaluación y estrategia de separación de datos
 
 | Campo | Valor |
 |---|---|
