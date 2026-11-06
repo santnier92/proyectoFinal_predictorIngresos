@@ -140,21 +140,30 @@ for line in ["Santiago Nieto Rodríguez",
     P(line, "center")
 story.append(PageBreak())
 
-# ============================================================== introduction (title, no heading)
+# ============================================================== introduction and objectives
 P(TITLE, "title")
+P("Introducción", "h1")
+P("Cada vez más decisiones que afectan a las personas, como aprobar un crédito, asignar un subsidio u ofrecer "
+  "un empleo, se apoyan en modelos de <i>machine learning</i> entrenados con datos históricos. Estos modelos "
+  "pueden ahorrar tiempo y dar resultados consistentes, pero también pueden equivocarse más con unos grupos que "
+  "con otros y repetir desigualdades del pasado sin que nadie lo note. Por eso, para valorar un modelo no basta "
+  "con saber si «acierta mucho»: también hay que entender cómo se equivoca y a quién afectan sus errores "
+  "(Barocas et al., 2023).")
 P("En este mini-proyecto construí un modelo sencillo de <i>machine learning</i>, medí qué tan bien funciona "
   "y analicé sus riesgos éticos. El modelo responde una pregunta concreta: a partir de datos como la edad, la "
   "educación, la ocupación y las horas de trabajo, ¿la persona gana más de 50.000 dólares al año? Para "
   "responderla usé una regresión logística entrenada con el conjunto de datos <i>Adult</i>, que proviene del "
-  "censo de Estados Unidos de 1994 (Becker &amp; Kohavi, 1996).")
+  "censo de Estados Unidos de 1994 (Becker &amp; Kohavi, 1996). Elegí este conjunto porque es un caso clásico "
+  "de estudio y porque incluye variables sensibles, como el sexo y la raza, que permiten hacer un análisis "
+  "ético con datos concretos.")
 P("Todo el trabajo se puede revisar y volver a ejecutar desde el repositorio del proyecto, en la rama "
   f"<b>develop</b>, que es la que se debe calificar: <a href='{REPO_URL}' color='#0b3d6b'><u>{REPO_URL}</u></a> "
   "(Nieto Rodríguez, 2026). Allí están el código, el modelo entrenado, las pruebas automáticas, los diagramas "
   "de arquitectura, las decisiones técnicas (ADR) y este informe.")
-P("El documento sigue el orden de la actividad. Primero explico por qué elegí el modelo y cómo son los datos. "
-  "Luego presento las métricas y la matriz de confusión. Después analizo los sesgos, la equidad, la privacidad "
-  "y el impacto social del modelo. Al final cierro con las conclusiones y algunas recomendaciones para "
-  "mejorarlo. La Tabla 1 resume los resultados principales.")
+P("El documento sigue el orden de la actividad. Después de los objetivos, explico por qué elegí el modelo y "
+  "cómo son los datos. Luego presento las métricas y la matriz de confusión. Después analizo los sesgos, la "
+  "equidad, la privacidad y el impacto social del modelo. Al final cierro con las conclusiones y algunas "
+  "recomendaciones para mejorarlo. La Tabla 1 resume los resultados principales.")
 table("Resumen de indicadores clave del modelo (conjunto de prueba)", [
     ["Indicador clave (conjunto de prueba)", "Valor"],
     ["Accuracy / baseline", f"{f(LR['accuracy'])} / {f(BL['accuracy'])}"],
@@ -163,6 +172,25 @@ table("Resumen de indicadores clave del modelo (conjunto de prueba)", [
     ["Criterios de aceptación cumplidos", "5 de 5"],
     ["Brecha de recall (TPR) hombres vs mujeres", f(FS["gaps"]["equal_opportunity_diff"], 3)],
 ], [9 * cm, 5 * cm], note="El baseline es un modelo de referencia que siempre predice la clase mayoritaria (≤50K).")
+
+P("Objetivos", "h1")
+P("Objetivo General", "h2")
+P("Aplicar métricas de evaluación y realizar un análisis ético para valorar un modelo sencillo de <i>machine "
+  "learning</i> que predice si una persona gana más de 50.000 dólares al año, y presentar conclusiones "
+  "fundamentadas y alineadas con los temas del curso.")
+P("Objetivos Específicos", "h2")
+for i, txt in enumerate([
+    "Seleccionar un modelo básico de clasificación y justificar su elección frente a otras alternativas.",
+    "Describir el conjunto de datos <i>Adult</i>: sus variables, la variable objetivo y la calidad de los datos.",
+    "Implementar las siete etapas del flujo de trabajo de <i>machine learning</i> en un repositorio "
+    "reproducible, con pruebas automáticas y decisiones de arquitectura documentadas.",
+    "Evaluar el modelo con accuracy, precision, recall, F1-score, ROC-AUC y la matriz de confusión, "
+    "comparándolo con un modelo de referencia y con criterios de aceptación definidos.",
+    "Analizar los sesgos, la equidad, la privacidad, el impacto social y la transparencia del modelo, "
+    "midiendo su desempeño por sexo, raza y país de origen.",
+    "Redactar conclusiones técnicas y proponer recomendaciones para mejorar el modelo.",
+], start=1):
+    story.append(Paragraph(txt, S["b"], bulletText=f"{i}."))
 
 # ============================================================== model
 P("Selección del Modelo", "h1")
