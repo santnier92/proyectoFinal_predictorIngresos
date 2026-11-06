@@ -43,6 +43,8 @@ Las decisiones automatizadas que dependen del nivel de ingresos de una persona (
 | **Exclusiones** | API web, despliegue en la nube, reentrenamiento automático, datos personales reales |
 | **Criterio de éxito** | Cumplir los 5 criterios de aceptación de la [sección 7](#7-calidad-y-evaluación-del-modelo) |
 | **Supuestos** | Los datos del censo de 1994 sirven como caso de estudio; los resultados no se extrapolan a la población actual |
+| **Resultado esperado (académico / de negocio)** | Evidencia verificable para decidir si un modelo de ingresos es **apto o no** para apoyar decisiones sobre personas: desempeño, errores y equidad medidos, más un repositorio reproducible que sirva de plantilla |
+| **Primera entrega** | Pipeline completo (etapas 1–7), informe PDF y documentación de arquitectura en la rama `develop` |
 
 ## 2. Qué hará y qué no hará el sistema
 
@@ -68,6 +70,26 @@ La arquitectura sigue el proceso visto en clase: interesados → drivers → esc
 | Estudiante / Analista | ¿Cómo entreno, evalúo y uso el modelo? | Un comando por etapa, pruebas automáticas |
 | Personas representadas en los datos | ¿El modelo las trata de forma justa? | Auditoría de equidad por sexo, raza y país |
 | Seguridad y datos | ¿Se protege la información sensible? | Dataset público y anonimizado, integridad SHA-256, sin servicio expuesto |
+| Operación TI | ¿Cómo se ejecuta, prueba y escala? | CI en GitHub Actions, benchmark de rendimiento, ruta de evolución a base de datos (ADR-005) |
+
+#### User personas
+
+Para entender las necesidades concretas, se definieron **12 user personas**: usuarios, evaluadores, operadores y personas afectadas por un modelo de este tipo. Cada una tiene su ficha completa (contexto, objetivo, frustraciones y cómo la atiende el proyecto) en **[`docs/user_personas.md`](docs/user_personas.md)**.
+
+| # | Persona | Rol | Necesidad principal | Cómo la atiende el proyecto |
+|---|---|---|---|---|
+| 1 | Rodrigo | Docente evaluador | Verificar la rúbrica desde `develop` | README, CI en verde, commits por etapa |
+| 2 | Laura | Analista de riesgo de crédito | Saber si el modelo es confiable | Métricas vs baseline, matriz de confusión |
+| 3 | Jorge | Analista de políticas públicas | Focalizar sin excluir grupos | Modelo interpretable y métricas por grupo |
+| 4 | Camila | Profesional solicitante de crédito | Trato justo y explicación | Auditoría por sexo; supervisión humana recomendada |
+| 5 | Marcela | Oficial de protección de datos | Cumplir la Ley 1581 de 2012 | Minimización, sin servicio expuesto, SHA-256 |
+| 6 | Valentina | Auditora de ética de IA | Auditar sesgos con evidencia | `reports/fairness_*.csv`, código abierto |
+| 7 | Andrés | Científico de datos junior | Pipeline reproducible y extensible | Un módulo por etapa, `Pipeline` sin fuga |
+| 8 | Esteban | Ingeniero DevOps / MLOps | Pruebas automáticas y portabilidad | GitHub Actions, modelo `.joblib` versionado |
+| 9 | Ricardo | DBA / ingeniero de datos | Volumen, tipos y almacenamiento | Benchmark de 1M de filas, ADR-005 con esquema SQL |
+| 10 | Diego | Gerente de producto fintech | Costo de cada tipo de error | Interpretación de FP/FN y curva de umbral |
+| 11 | Sofía | Estudiante de Ing. de Software | Entender el proyecto | Glosario, diagramas C4, notebook |
+| 12 | Luis | Trabajador migrante | No ser penalizado por su origen | Auditoría por país de origen |
 
 ### 3.2 Drivers arquitectónicos (priorizados)
 
@@ -78,7 +100,27 @@ La arquitectura sigue el proceso visto en clase: interesados → drivers → esc
 | P1 | Resultado académico | **Evidencia por etapa** del workflow de ML | Un componente por etapa + notebook ejecutado |
 | P2 | Atributo de calidad | **Interpretabilidad / transparencia** para el análisis ético | Regresión Logística con coeficientes (ADR-002) |
 | P2 | Riesgo | **Sesgo** del dataset de 1994 | Componente Fairness Auditor y métricas por grupo |
+| P2 | Atributo de calidad | **Rendimiento**: entrenar y predecir rápido en un portátil común | Modelo lineal + operaciones vectorizadas; benchmark en `src/benchmark.py` |
+| P2 | Restricción de datos | **Volumen y tipos de datos**: datos tabulares mixtos que deben escalar a millones de filas | Procesamiento en memoria hasta ~1–5 M de filas; ruta a PostgreSQL o Parquet (ADR-005) |
 | P3 | Restricción | Costo cero y sin credenciales de nube | Ejecución local, artefactos en Git (ADR-003) |
+
+#### Volumen y tipos de datos
+
+| Aspecto | Valor medido |
+|---|---|
+| Registros / columnas | 48,842 × 15 (48,790 sin duplicados) |
+| Tipos | 6 numéricas enteras (edad, horas, capital…) y 9 categóricas de texto (ocupación, estado civil, sexo, raza…); objetivo binario |
+| Tamaño | 5.3 MB en CSV · ~22 MB en memoria · 84 variables tras el one-hot |
+| Patrón de acceso | Lectura batch completa; dataset estático (sin escrituras ni concurrencia) |
+
+**¿Y si fueran millones de registros?** Se simuló remuestreando el entrenamiento hasta **1,000,000 de filas** (`python -m src.benchmark`, máquina de 2 vCPU y 7 GB de RAM):
+
+| Escenario | Filas de entrenamiento | Entrenamiento | Memoria pico | Inferencia por lotes | Latencia de 1 registro (p95) |
+|---|---|---|---|---|---|
+| Dataset real | 39,032 | 0.79 s | 18 MB | ~806,000 filas/s | 3.4 ms |
+| Escala 1M | 1,000,000 | 19.1 s | 468 MB | ~1,081,000 filas/s | 3.4 ms |
+
+El costo crece de forma aproximadamente lineal. Con decenas de millones de filas, el cuello de botella sería la memoria, y la ruta de evolución es la del ADR-005 (PostgreSQL o Parquet y entrenamiento por lotes o en SageMaker).
 
 ### 3.3 Escenarios de calidad medibles
 
@@ -92,6 +134,9 @@ La arquitectura sigue el proceso visto en clase: interesados → drivers → esc
 | Integridad de datos | El CSV de entrada es alterado | Carga de datos | El pipeline se detiene con error | 100 % de alteraciones detectadas (SHA-256) | P2 |
 | Robustez de la entrada | Llega un CSV sin columnas requeridas | Predicción por CLI | Rechaza la entrada con un mensaje claro | `ValueError` que lista las columnas faltantes | P2 |
 | Equidad | Se audita el modelo | Test, por grupo | Reporta brechas por sexo y raza | Diferencias de TPR y de tasa de selección publicadas en `reports/` | P2 |
+| Rendimiento (entrenamiento) | Se entrena el modelo seleccionado | Dataset real, 2 vCPU | Ajusta el pipeline completo | ≤ 5 s (medido: **0.79 s**) | P2 |
+| Rendimiento (escala) | Llega un volumen de 1,000,000 de registros | Misma máquina, en memoria | Entrena sin agotar la memoria | ≤ 60 s y ≤ 1 GB (medido: **19.1 s, 468 MB**) | P2 |
+| Rendimiento (inferencia) | Se predice un lote o un registro individual | CLI local | Devuelve probabilidad y clase | ≥ 100,000 filas/s y p95 ≤ 50 ms por registro (medido: **~806,000 filas/s, 3.4 ms**) | P3 |
 
 ### 3.4 Diagrama C4 de contexto (nivel 1)
 
@@ -156,6 +201,17 @@ Fuente: [`docs/diagramas/c4-componentes.dot`](docs/diagramas/c4-componentes.dot)
 | Evaluator (`src/evaluate.py`) | Métricas, matriz de confusión, ROC y aceptación | 6 |
 | Fairness Auditor (`src/fairness.py`) | Métricas por grupo protegido | 6 |
 | Predictor CLI (`src/predict.py`) | Valida la entrada y predice registros nuevos | 7 |
+| Benchmark (`src/benchmark.py`) | Mide tiempos, memoria y escala | Soporte |
+
+#### Revisión de la arquitectura lógica (preguntas de control)
+
+| Actividad | Pregunta de control | Respuesta en este diseño |
+|---|---|---|
+| Identificar componentes | ¿Qué responsabilidades aparecen en los recorridos críticos? | Cargar, transformar, entrenar, evaluar, auditar y predecir: un componente para cada una |
+| Asignar capacidades | ¿Cada capacidad tiene un componente responsable? | Sí: integridad → Data Loader; sin fuga → Feature Builder; métricas → Evaluator; equidad → Fairness Auditor |
+| Revisar cohesión | ¿Las responsabilidades de un componente cambian por razones relacionadas? | Sí: cada módulo cambia solo si cambia su etapa (p. ej., un modelo nuevo solo toca `models.py`) |
+| Revisar acoplamiento | ¿Qué dependencias obligan a cambiar dos componentes a la vez? | Solo `config.py` (columnas y umbrales) es compartido; los componentes se comunican con DataFrames y `Pipeline` |
+| Asignar drivers | ¿Qué componente asume rendimiento, seguridad y disponibilidad? | Rendimiento → Trainer/Predictor (vectorizado); seguridad de datos → Data Loader (SHA-256) y Predictor (validación de entrada); calidad → Evaluator + CI |
 
 ## 4. Datos
 
@@ -211,18 +267,19 @@ flowchart LR
 ```
 proyectoFinal_predictorIngresos/
 ├── .github/workflows/ci.yml   # CI: pipeline + pytest en cada push/PR
-├── ADRs/                      # Architecture Decision Records (4)
+├── ADRs/                      # Architecture Decision Records (5)
 ├── data/
 │   ├── raw/adult.csv          # Dataset original (CC BY 4.0)
 │   └── sample_new_people.csv  # Registros de ejemplo para la etapa 7
 ├── docs/
 │   ├── Informe_Actividad6.pdf # Desarrollo completo de la actividad
 │   ├── build_report.py        # Regenera el PDF desde reports/metrics.json
+│   ├── user_personas.md       # 12 user personas con su ficha completa
 │   └── diagramas/             # C4 de contexto y de componentes (.dot y .png)
 ├── models/logreg.joblib       # Pipeline entrenado (preprocesamiento + modelo)
 ├── notebooks/workflow_ml.ipynb# Evidencia ejecutada de cada etapa
-├── reports/                   # metrics.json, comparaciones, auditoría de equidad, figuras
-├── src/                       # Un módulo por etapa del workflow
+├── reports/                   # metrics.json, performance.json, comparaciones, auditoría de equidad, figuras
+├── src/                       # Un módulo por etapa del workflow + benchmark.py
 ├── tests/test_pipeline.py     # Integridad, fuga de información y aceptación
 └── requirements.txt
 ```
@@ -236,7 +293,8 @@ Cada ADR sigue la plantilla de [ZAITects](https://github.com/TheKataLog/ZAITects
 | [ADR-001](ADRs/ADR-001-enfoque-de-implementacion.md) | **Enfoque de implementación:** pipeline modular en Python/scikit-learn + notebook de evidencia (en lugar de un notebook monolítico o SageMaker) | Aceptada |
 | [ADR-002](ADRs/ADR-002-seleccion-del-modelo.md) | **Selección del modelo:** Regresión Logística por interpretabilidad y probabilidades útiles, con desempeño equivalente al Árbol de Decisión | Aceptada |
 | [ADR-003](ADRs/ADR-003-almacenamiento-y-despliegue.md) | **Almacenamiento y despliegue:** CSV con SHA-256 + modelo `.joblib` versionados en Git; uso por CLI local | Aceptada |
-| [ADR-004](ADRs/ADR-004-separacion-de-datos-y-metrica-principal.md) | **Separación de datos y métrica:** hold-out estratificado 80/20 + CV 5 folds; F1 como métrica principal | Aceptada |
+| [ADR-004](ADRs/ADR-004-separacion-de-datos-y-metrica-principal.md) | **Métricas y separación de datos:** por qué F1 es la métrica principal (y no la accuracy), ROC-AUC como secundaria; hold-out estratificado 80/20 + CV 5 folds | Aceptada |
+| [ADR-005](ADRs/ADR-005-lenguaje-de-programacion-y-base-de-datos.md) | **Lenguaje y base de datos:** Python 3.11 + scikit-learn; CSV versionado sin motor de base de datos, con ruta de evolución a PostgreSQL o Parquet | Aceptada |
 
 ## 7. Calidad y evaluación del modelo
 
@@ -322,6 +380,9 @@ python -m src.pipeline
 # 4. Validate acceptance criteria
 python -m pytest -q                # expected: 6 passed
 
+# 4b. (Optional) Performance and scalability benchmark -> reports/performance.json
+python -m src.benchmark --rows 1000000
+
 # 5. Predict on new data (stage 7)
 python -m src.predict --input data/sample_new_people.csv
 python -m src.predict --input data/sample_new_people.csv --threshold 0.35
@@ -356,12 +417,14 @@ pip install reportlab && python docs/build_report.py
 | **Matriz de confusión** | Tabla 2×2 que cruza clase real y predicha: VP, FP, VN, FN. |
 | **One-hot encoding** | Convierte cada categoría en una columna binaria. |
 | **Pipeline** | Cadena de transformaciones + modelo que se ajusta como una sola unidad. |
+| **p95 (latencia)** | Tiempo por debajo del cual queda el 95 % de las mediciones. |
 | **Precision** | De los predichos positivos, cuántos lo son realmente: VP / (VP + FP). |
 | **Proxy (variable)** | Variable no sensible que está correlacionada con un atributo sensible (p. ej., `relationship=Wife` → sexo). |
 | **Recall / TPR** | De los positivos reales, cuántos detecta el modelo: VP / (VP + FN). |
 | **Regresión Logística** | Modelo lineal que estima la probabilidad de la clase positiva mediante la función sigmoide. |
 | **ROC-AUC** | Área bajo la curva ROC: capacidad de ordenar positivos sobre negativos, independiente del umbral. |
 | **Sobreajuste** | El modelo memoriza el entrenamiento y generaliza mal. |
+| **User persona** | Perfil ficticio, pero realista, de un usuario o afectado, con sus objetivos y necesidades, que guía el diseño. |
 | **Umbral de decisión** | Probabilidad a partir de la cual se predice la clase positiva (0.5 por defecto). |
 | **Validación cruzada (k-fold)** | Se entrena y valida k veces con particiones distintas para estimar estabilidad. |
 
