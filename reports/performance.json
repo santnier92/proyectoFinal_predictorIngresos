@@ -1,0 +1,34 @@
+{
+  "dataset": {
+    "rows": 48790,
+    "raw_columns": 15,
+    "numeric_features": 5,
+    "categorical_features": 7,
+    "csv_size_mb": 5.28,
+    "in_memory_mb": 22.2
+  },
+  "runs": [
+    {
+      "scenario": "Dataset real",
+      "train_rows": 39032,
+      "train_seconds": 0.79,
+      "train_peak_memory_mb": 18.4,
+      "batch_rows": 9758,
+      "batch_seconds": 0.012,
+      "throughput_rows_per_second": 805740,
+      "single_record_latency_ms_p50": 3.16,
+      "single_record_latency_ms_p95": 3.35
+    },
+    {
+      "scenario": "Escala 1,000,000 filas",
+      "train_rows": 1000000,
+      "train_seconds": 19.14,
+      "train_peak_memory_mb": 468.0,
+      "batch_rows": 1000000,
+      "batch_seconds": 0.925,
+      "throughput_rows_per_second": 1081303,
+      "single_record_latency_ms_p50": 3.17,
+      "single_record_latency_ms_p95": 3.44
+    }
+  ]
+}
