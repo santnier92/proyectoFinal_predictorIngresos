@@ -22,6 +22,7 @@ digraph C4Component {
         trainer  [label=<<b>Trainer</b><br/><font point-size="9">[Component: src/train.py]</font><br/><font point-size="9">Etapa 5 · GridSearchCV 5 folds</font>>];
         evaluator[label=<<b>Evaluator</b><br/><font point-size="9">[Component: src/evaluate.py]</font><br/><font point-size="9">Etapa 6 · métricas, matriz, aceptación</font>>];
         auditor  [label=<<b>Fairness Auditor</b><br/><font point-size="9">[Component: src/fairness.py]</font><br/><font point-size="9">Etapa 6 · métricas por grupo</font>>];
+        bench    [label=<<b>Benchmark</b><br/><font point-size="9">[Component: src/benchmark.py]</font><br/><font point-size="9">Mide tiempos, memoria y escala</font>>];
         predictor[label=<<b>Predictor CLI</b><br/><font point-size="9">[Component: src/predict.py]</font><br/><font point-size="9">Etapa 7 · predice datos nuevos</font>>];
 
         node [shape=cylinder, fillcolor="#438dd5", color="#2e6295", fontcolor="white"];
@@ -48,4 +49,7 @@ digraph C4Component {
     evaluator -> reportstore [label=" escribe"];
     auditor -> reportstore   [label=" escribe"];
     predictor -> modelstore  [label=" carga"];
+    analista -> bench        [label=" python -m src.benchmark", style=dashed];
+    bench -> catalog         [label=" usa LogReg", style=dashed];
+    bench -> reportstore     [label=" performance.json", style=dashed];
 }
